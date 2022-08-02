@@ -2,6 +2,7 @@ package com.example.servlet.model;
 
 import lombok.Data;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -10,6 +11,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 @Data
@@ -22,17 +24,9 @@ public class Variant {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "price")
-    private Double price;
-
-    @Column(name = "image")
-    private String image;
-
-    @Column(name = "size")
-    private String size;
-
-    @Column(name = "color")
-    private String color;
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "detail_id")
+    private ProductDetail detail;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")

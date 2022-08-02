@@ -1,7 +1,9 @@
 package com.example.servlet.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -30,7 +32,7 @@ public class Vendor {
     @Column(name = "address")
     private String address;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "vendor")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "vendor",cascade = CascadeType.ALL)
     private List<Product> products;
 
 }

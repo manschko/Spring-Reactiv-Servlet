@@ -1,5 +1,7 @@
 package com.example.servlet.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 import javax.persistence.Column;
@@ -32,6 +34,5 @@ public class ProductDetail {
     @Column(name = "color")
     private String color;
 
-    @OneToOne(fetch = FetchType.LAZY, mappedBy = "detail")
-    private Product product;
+
 }

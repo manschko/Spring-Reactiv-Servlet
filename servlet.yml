@@ -1,0 +1,15 @@
+version: "3.8"
+services:
+  servlet:
+    build: Servlet/
+    ports:
+      - "8080:8080"
+    networks:
+      - servletReactive
+    depends_on:
+      - db
+
+#TODO issue when network is not created yet. maeby need to use same network insteat of searching for existing one? Could give error if network exists already?
+networks:
+  servletReactive:
+    external: true
