@@ -13,7 +13,19 @@ repositories {
 }
 
 dependencies {
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    testCompileOnly 'org.projectlombok:lombok:1.18.24'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    //db stuff
+    implementation 'org.springframework.boot:spring-boot-starter-data-neo4j:2.7.2'
+
+
+//    implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc:2.7.2'
+//    implementation group: 'io.r2dbc', name: 'r2dbc-postgresql', version: '0.8.12.RELEASE'
+//    implementation 'org.postgresql:postgresql:42.4.0'
+
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'

@@ -3,7 +3,10 @@ package com.example.servlet.controller;
 import com.example.servlet.model.Category;
 import com.example.servlet.model.Product;
 import com.example.servlet.model.Variant;
+import com.example.servlet.model.Vendor;
+import com.example.servlet.repository.CategoryRepository;
 import com.example.servlet.repository.ProductRepository;
+import com.example.servlet.repository.VendorRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +26,10 @@ public class ProductController {
     Logger logger = LoggerFactory.getLogger(ProductController.class);
     @Autowired
     private ProductRepository dataRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
+    @Autowired
+    private VendorRepository vendorRepository;
 
     @RequestMapping(method = RequestMethod.GET, path = "/products")
     public List<Product> getProduct() {
@@ -43,50 +50,84 @@ public class ProductController {
 
     @RequestMapping(method = RequestMethod.POST, path = "/product")
     public void createProduct(@RequestBody Product product) {
-        //TODO not working
+        //TODO not working, null
         logger.info("Creating product:");
-        Product test = new Product();
+        this.categoryRepository.saveAll(product.getCategories());
         this.dataRepository.save(product);
     }
 
     @RequestMapping(method = RequestMethod.GET, path = "/vendors")
-    public void getVendors() {
-        logger.info("getVendors");
+    public List<Vendor> getVendors() {
+        List<Vendor> vendors = vendorRepository.findAll();
+        for (Vendor vendor : vendors) {
+            for (Product product : vendor.getProducts()) {
+                cleanupProduct(product);
+            }
+        }
+        return vendors;
     }
     @RequestMapping(method = RequestMethod.GET, path = "/vendor/{id}")
-    public void getVendorById() {
-        logger.info("getVendorById");
+    public Vendor getVendorById(@PathVariable("id") Long id) {
+        Vendor vendor = vendorRepository.findById(id).orElse(null);
+        if(vendor == null) {
+            return null;
+        }
+        for (Product product : vendor.getProducts()) {
+            cleanupProduct(product);
+        }
+        return vendor;
     }
 
     @RequestMapping(method = RequestMethod.GET, path = "/vendor/{id}/products")
-    public void getVendorProducts() {
-        logger.info("getVendorProducts");
+    public List<Product> getVendorProducts(@PathVariable("id") Long id) {
+        List<Product> products = dataRepository.findByVendorId(id);
+        for (Product product : products) {
+            cleanupProduct(product);
+        }
+        return products;
     }
 
 
     @RequestMapping(method = RequestMethod.POST, path = "/vendor")
-    public void createVendor() {
-        logger.info("createVendor");
+    public void createVendor(@RequestBody Vendor vendor) {
+        vendorRepository.save(vendor);
     }
 
     @RequestMapping(method = RequestMethod.GET, path = "/categories")
-    public void getCategories() {
-        logger.info("getCategories");
+    public List<Category> getCategories() {
+        List<Category> categories = categoryRepository.findAll();
+        for (Category category : categories) {
+            for (Product product : category.getProducts()) {
+                cleanupProduct(product);
+            }
+        }
+        return categories;
     }
 
     @RequestMapping(method = RequestMethod.POST, path = "/category")
-    public void createCategory() {
-        logger.info("createCategory");
+    public void createCategory(@RequestBody Category category) {
+        categoryRepository.save(category);
     }
 
     @RequestMapping(method = RequestMethod.GET, path = "/category/{id}")
-    public void getCategoryById() {
-        logger.info("getCategoryById");
+    public Category getCategoryById(@PathVariable("id") Long id) {
+        Category category = categoryRepository.findById(id).orElse(null);
+        if(category == null) {
+            return null;
+        }
+        for (Product product : category.getProducts()) {
+            cleanupProduct(product);
+        }
+        return category;
     }
 
     @RequestMapping(method = RequestMethod.GET, path = "/category/{id}/products")
-    public void getProductsByCategoryId() {
-        logger.info("getProductsByCategoryId");
+    public List<Product> getProductsByCategoryId(@PathVariable("id") Long id) {
+        List<Product> products = dataRepository.findByCategoriesId(id);
+        for (Product product : products) {
+            cleanupProduct(product);
+        }
+        return products;
     }
 
 

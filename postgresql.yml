@@ -1,6 +1,6 @@
 version: "3.8"
 services:
-  db:
+  postgres:
     image: postgres
     ports:
       - "5432:5432"
@@ -17,8 +17,9 @@ services:
 
   servlet:
     environment:
-      DSURL: jdbc:postgresql://localhost:5432/postgres
+      DSURL: jdbc:postgresql://postgres:5432/postgres
       DSCLASS: org.postgresql.Driver
+      R2DBC_URL: r2dbc:postgresql://postgres:5432/postgres
 
 networks:
   servletReactive:
