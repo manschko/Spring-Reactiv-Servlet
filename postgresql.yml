@@ -19,7 +19,14 @@ services:
     environment:
       DSURL: jdbc:postgresql://postgres:5432/postgres
       DSCLASS: org.postgresql.Driver
+      PROFILE: postgres
+
+
+  reactive:
+    environment:
       R2DBC_URL: r2dbc:postgresql://postgres:5432/postgres
+      PROFILE: postgres
+
 
 networks:
   servletReactive:

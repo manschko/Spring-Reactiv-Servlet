@@ -1,10 +1,12 @@
 # Spring boot API with Reactive stack  implementation
 To run the Spring boot application the environment variables need to be set for the DB connection.
 
-| Env Variable | Usage in Spring application.properties | Example                                   |
-|:------------:|----------------------------------------|-------------------------------------------|
-|    DSURL     | spring.datasource.url                  | jdbc:postgresql://localhost:5432/postgres |
-|   DSCLASS    | spring.datasource.driverClassName      | org.postgresql.Driver                     |
+| Env Variable | Usage in Spring application.properties   | Example                                   |
+|:------------:|------------------------------------------|-------------------------------------------|
+|    DSURL     | spring.datasource.url                    | jdbc:postgresql://localhost:5432/postgres |
+|   DSCLASS    | spring.datasource.driverClassName        | org.postgresql.Driver                     |
+|   PROFILE    | spring.profiles.active                   | possible options: ``postgres``            |
+
 ## Build jar with gradle
 ```bash
 gradle jar

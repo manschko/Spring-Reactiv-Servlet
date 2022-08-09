@@ -1,0 +1,15 @@
+version: "3.8"
+services:
+  reactive:
+    build: Reactive/
+    ports:
+      - "8080:8080"
+    networks:
+      - servletReactive
+    depends_on:
+      - postgres
+
+
+networks:
+  servletReactive:
+    external: true
