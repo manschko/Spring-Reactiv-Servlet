@@ -1,16 +1,15 @@
 package com.example.reactive.model;
 
 
-import com.example.reactive.model.Variant;
-import com.example.reactive.model.Vendor;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.util.List;
 
+
 @Data
-@Table(name = "product")
+@Table("product")
 public class Product {
 
     @Id
@@ -23,6 +22,18 @@ public class Product {
     private ProductDetail detail;
 
     private Vendor vendor;
+
+    public Product(Long product_id) {
+        this.id = product_id;
+    }
+
+    public Product() {
+
+    }
+
+    public void setVendor(Vendor vendor) {
+        this.vendor = vendor;
+    }
 
     private List<Variant> variants;
 

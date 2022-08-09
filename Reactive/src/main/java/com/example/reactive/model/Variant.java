@@ -2,10 +2,8 @@ package com.example.reactive.model;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Table;
 
 @Data
-@Table(name = "variant")
 public class Variant {
 
     @Id
@@ -13,6 +11,7 @@ public class Variant {
 
     private ProductDetail detail;
 
+    //private Long productId;
     private Product product;
 
 }
