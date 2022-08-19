@@ -10,7 +10,9 @@ import com.example.servlet.repository.VendorRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -31,24 +33,17 @@ public class ProductController {
     @Autowired
     private VendorRepository vendorRepository;
 
-    @RequestMapping(method = RequestMethod.GET, path = "/products")
+    @GetMapping(path = "/products")
     public List<Product> getProduct() {
-        List<Product> products = dataRepository.findAll();
-        for (Product product : products) {
-            cleanupProduct(product);
-        }
-        return products;
-
+        return dataRepository.findAll();
     }
 
-    @RequestMapping(method = RequestMethod.GET, path = "/product/{id}")
+    @GetMapping(path = "/product/{id}")
     public Product getProductById(@PathVariable("id") Long id) {
-        Optional<Product> product = dataRepository.findById(id);
-        product.ifPresent(this::cleanupProduct);
-        return product.orElse(null);
+        return dataRepository.findById(id).orElse(null);
     }
 
-    @RequestMapping(method = RequestMethod.POST, path = "/product")
+    @PostMapping(path = "/product")
     public void createProduct(@RequestBody Product product) {
         //TODO not working, null
         logger.info("Creating product:");
@@ -56,90 +51,56 @@ public class ProductController {
         this.dataRepository.save(product);
     }
 
-    @RequestMapping(method = RequestMethod.GET, path = "/vendors")
+    @GetMapping(path = "/vendors")
     public List<Vendor> getVendors() {
-        List<Vendor> vendors = vendorRepository.findAll();
-        for (Vendor vendor : vendors) {
-            for (Product product : vendor.getProducts()) {
-                cleanupProduct(product);
-            }
-        }
-        return vendors;
+        return vendorRepository.findAll();
     }
-    @RequestMapping(method = RequestMethod.GET, path = "/vendor/{id}")
+    @GetMapping(path = "/vendor/{id}")
     public Vendor getVendorById(@PathVariable("id") Long id) {
-        Vendor vendor = vendorRepository.findById(id).orElse(null);
-        if(vendor == null) {
-            return null;
-        }
-        for (Product product : vendor.getProducts()) {
-            cleanupProduct(product);
-        }
-        return vendor;
+        return vendorRepository.findById(id).orElse(null);
     }
 
-    @RequestMapping(method = RequestMethod.GET, path = "/vendor/{id}/products")
+    @GetMapping(path = "/vendor/{id}/products")
     public List<Product> getVendorProducts(@PathVariable("id") Long id) {
-        List<Product> products = dataRepository.findByVendorId(id);
-        for (Product product : products) {
-            cleanupProduct(product);
-        }
-        return products;
+        return dataRepository.findByVendorId(id);
     }
 
 
-    @RequestMapping(method = RequestMethod.POST, path = "/vendor")
+    @PostMapping(path = "/vendor")
     public void createVendor(@RequestBody Vendor vendor) {
         vendorRepository.save(vendor);
     }
 
-    @RequestMapping(method = RequestMethod.GET, path = "/categories")
+    @GetMapping(path = "/categories")
     public List<Category> getCategories() {
-        List<Category> categories = categoryRepository.findAll();
-        for (Category category : categories) {
-            for (Product product : category.getProducts()) {
-                cleanupProduct(product);
-            }
-        }
-        return categories;
+        return categoryRepository.findAll();
     }
 
-    @RequestMapping(method = RequestMethod.POST, path = "/category")
+    @PostMapping(path = "/category")
     public void createCategory(@RequestBody Category category) {
         categoryRepository.save(category);
     }
 
-    @RequestMapping(method = RequestMethod.GET, path = "/category/{id}")
+    @GetMapping(path = "/category/{id}")
     public Category getCategoryById(@PathVariable("id") Long id) {
-        Category category = categoryRepository.findById(id).orElse(null);
-        if(category == null) {
-            return null;
-        }
-        for (Product product : category.getProducts()) {
-            cleanupProduct(product);
-        }
-        return category;
+        return categoryRepository.findById(id).orElse(null);
     }
 
-    @RequestMapping(method = RequestMethod.GET, path = "/category/{id}/products")
+    @GetMapping(path = "/category/{id}/products")
     public List<Product> getProductsByCategoryId(@PathVariable("id") Long id) {
-        List<Product> products = dataRepository.findByCategoriesId(id);
-        for (Product product : products) {
-            cleanupProduct(product);
-        }
-        return products;
+        return dataRepository.findByCategoriesId(id);
     }
 
 
 
 
-    private void cleanupProduct(Product product) {
-        product.getVendor().setProducts(null);
-        for(Variant variant : product.getVariants()) {
-            variant.setProduct(null);
-        }
-        for(Category category : product.getCategories()) {
-            category.setProducts(null);
-        }
-    }
+//    private void cleanupProduct(Product product) {
+//        product.getVendor().setProducts(null);
+//        for(Variant variant : product.getVariants()) {
+//            variant.setProduct(null);
+//        }
+//        for(Category category : product.getCategories()) {
+//            category.setProducts(null);
+//        }
+//    }
 }

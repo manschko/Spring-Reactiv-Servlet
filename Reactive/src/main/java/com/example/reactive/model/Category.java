@@ -1,5 +1,6 @@
 package com.example.reactive.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
@@ -17,6 +18,7 @@ public class Category {
     private String name;
 
 
+    @JsonIgnore
     private List<Product> products;
 
 

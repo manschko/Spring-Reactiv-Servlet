@@ -1,5 +1,6 @@
 package com.example.reactive.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 
@@ -11,7 +12,7 @@ public class Variant {
 
     private ProductDetail detail;
 
-    //private Long productId;
+    @JsonIgnore
     private Product product;
 
 }

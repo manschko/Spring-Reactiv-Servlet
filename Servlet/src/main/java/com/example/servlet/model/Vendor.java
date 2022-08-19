@@ -1,5 +1,6 @@
 package com.example.servlet.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
@@ -32,6 +33,7 @@ public class Vendor {
     @Column(name = "address")
     private String address;
 
+    @JsonIgnore
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "vendor",cascade = CascadeType.ALL)
     private List<Product> products;
 

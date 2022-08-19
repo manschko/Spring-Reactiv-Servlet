@@ -10,4 +10,5 @@ public interface ExProductRepository {
     Mono<List<Product>> findAllProductsByVendorId(Long vendorId);
     Mono<List<Product>> findAllProductsByCategoryId(Long categoryId);
     Mono<Product> findProductById(Long id);
+    Mono<Object> saveProduct(Product product);
 }
