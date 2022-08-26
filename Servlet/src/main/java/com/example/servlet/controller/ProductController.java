@@ -2,30 +2,25 @@ package com.example.servlet.controller;
 
 import com.example.servlet.model.Category;
 import com.example.servlet.model.Product;
-import com.example.servlet.model.Variant;
 import com.example.servlet.model.Vendor;
 import com.example.servlet.repository.CategoryRepository;
 import com.example.servlet.repository.ProductRepository;
 import com.example.servlet.repository.VendorRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Optional;
 
 
 @RestController
 public class ProductController {
 
-    Logger logger = LoggerFactory.getLogger(ProductController.class);
     @Autowired
     private ProductRepository dataRepository;
     @Autowired
@@ -34,8 +29,12 @@ public class ProductController {
     private VendorRepository vendorRepository;
 
     @GetMapping(path = "/products")
-    public List<Product> getProduct() {
-        return dataRepository.findAll();
+    public Page<Product> getProduct(@RequestBody(required = false) com.example.servlet.model.PageRequest page) {
+
+        if (page == null) {
+            page = new com.example.servlet.model.PageRequest();
+        }
+        return dataRepository.findAllByOrderByIdAsc(PageRequest.of(page.getPage(), page.getSize()));
     }
 
     @GetMapping(path = "/product/{id}")
@@ -45,8 +44,6 @@ public class ProductController {
 
     @PostMapping(path = "/product")
     public void createProduct(@RequestBody Product product) {
-        //TODO not working, null
-        logger.info("Creating product:");
         this.categoryRepository.saveAll(product.getCategories());
         this.dataRepository.save(product);
     }
@@ -55,14 +52,18 @@ public class ProductController {
     public List<Vendor> getVendors() {
         return vendorRepository.findAll();
     }
+
     @GetMapping(path = "/vendor/{id}")
     public Vendor getVendorById(@PathVariable("id") Long id) {
         return vendorRepository.findById(id).orElse(null);
     }
 
     @GetMapping(path = "/vendor/{id}/products")
-    public List<Product> getVendorProducts(@PathVariable("id") Long id) {
-        return dataRepository.findByVendorId(id);
+    public Page<Product> getVendorProducts(@PathVariable("id") Long id, @RequestBody(required = false) com.example.servlet.model.PageRequest page) {
+        if (page == null) {
+            page = new com.example.servlet.model.PageRequest();
+        }
+        return dataRepository.findByVendorId(id, PageRequest.of(page.getPage(), page.getSize()));
     }
 
 
@@ -87,20 +88,10 @@ public class ProductController {
     }
 
     @GetMapping(path = "/category/{id}/products")
-    public List<Product> getProductsByCategoryId(@PathVariable("id") Long id) {
-        return dataRepository.findByCategoriesId(id);
+    public Page<Product> getProductsByCategoryId(@PathVariable("id") Long id, @RequestBody(required = false) com.example.servlet.model.PageRequest page) {
+        if (page == null) {
+            page = new com.example.servlet.model.PageRequest();
+        }
+        return dataRepository.findByCategoriesId(id, PageRequest.of(page.getPage(), page.getSize()));
     }
-
-
-
-
-//    private void cleanupProduct(Product product) {
-//        product.getVendor().setProducts(null);
-//        for(Variant variant : product.getVariants()) {
-//            variant.setProduct(null);
-//        }
-//        for(Category category : product.getCategories()) {
-//            category.setProducts(null);
-//        }
-//    }
 }
