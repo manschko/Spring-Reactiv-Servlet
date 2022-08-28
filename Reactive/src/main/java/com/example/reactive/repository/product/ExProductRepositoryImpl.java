@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,57 +28,75 @@ public class ExProductRepositoryImpl implements ExProductRepository {
 
 
     @Override
-    public Mono<List<Product>> findAllProducts() {
-        String productQuery = """
+    public Mono<List<Product>> findAllProducts(Integer limit) {
+        String productQuery = String.format("""
                 SELECT v.name as vendorName, product.*, pd.color, pd.image, pd.price, pd.size, v.address, v.contact_num
                 FROM product
                 INNER JOIN product_detail pd
                 ON product.detail_id = pd.id
                 INNER JOIN vendor v
                 ON product.vendor_id = v.id
-                """;
+                LIMIT %s
+                """, limit);
 
         String variantQuery = """
                 SELECT *
                 FROM variant
                 INNER JOIN product_detail pd
                 ON variant.detail_id = pd.id
+                WHERE variant.product_id IN %s
                 """;
 
-        String categoryQuery = "SELECT * FROM category";
-        String catergoryProductQuery = "SELECT * FROM product_category";
+        String categoryQuery = """
+                SELECT *
+                FROM product_category
+                INNER JOIN category
+                ON product_category.category_id = category.id
+                WHERE product_id IN %s
+                """;
+        //todo maybe do it another way instead of doing the call twice
+        String productCategoryQuery = """
+                SELECT *
+                FROM product_category
+                WHERE product_category.product_id IN %s
+                """;
 
-        Mono<List<Variant>> variants = client
-                .sql(variantQuery)
-                .fetch()
-                .all().collectList().map(rows -> rows.stream().map(mapper::variant).toList());
-
-        Mono<List<Product>> products = client
+        return client
                 .sql(productQuery)
                 .fetch()
-                .all().collectList().map(rows -> rows.stream().map(mapper::product).toList());
+                .all().collectList().map(rows -> {
+                    List<Product> products = rows.stream().map(mapper::product).toList();
+                    List<String> productIds = new ArrayList<>();
+                    products.forEach(product -> {
+                        productIds.add(product.getId().toString());
+                    });
+                    Mono<List<Long[]>> productCategory = client
+                            .sql(productCategoryQuery)
+                            .fetch()
+                            .all().collectList().map(rows2 -> rows.stream().map(mapper::categoryProduct).toList());
 
-        Mono<List<Category>> categories = client
-                .sql(categoryQuery)
-                .fetch()
-                .all().collectList().map(rows -> rows.stream().map(mapper::category).toList());
 
-        Mono<List<Long[]>> categoryProduct = client
-                .sql(catergoryProductQuery)
-                .fetch()
-                .all().collectList().map(rows -> rows.stream().map(mapper::categoryProduct).toList());
+                    Mono<List<Category>> categories = client
+                            .sql(String.format(categoryQuery, "(" + String.join(", ", productIds) + ")"))
+                            .fetch()
+                            .all().collectList().map(rows2 -> rows2.stream().map(mapper::category).toList());
+                    Mono<List<Variant>> variants = client
+                            .sql(String.format(variantQuery, "(" + String.join(", ", productIds) + ")"))
+                            .fetch()
+                            .all().collectList().map(row2 -> row2.stream().map(mapper::variant).toList());
 
+                    return Mono.zip(categories, variants, productCategory).flatMap(data -> {
+                        Map<Long, Product> p = products.stream().collect(Collectors.toMap(Product::getId, pr -> pr));
+                        Map<Long, Category> c = data.getT1().stream().collect(Collectors.toMap(Category::getId, cr -> cr));
 
-        return Mono.zip(variants, products, categories, categoryProduct).flatMap(data -> {
+                        data.getT2().forEach(variant -> p.get(variant.getProduct().getId()).getVariants().add(variant));
+                        data.getT3().forEach(cp -> p.get(cp[0]).getCategories().add(c.get(cp[1])));
 
-            Map<Long, Product> p = data.getT2().stream().collect(Collectors.toMap(Product::getId, pr -> pr));
-            Map<Long, Category> c = data.getT3().stream().collect(Collectors.toMap(Category::getId, cr -> cr));
+                        return Mono.just(products);
+                    });
 
-            data.getT1().forEach(variant -> p.get(variant.getProduct().getId()).getVariants().add(variant));
-            data.getT4().forEach(cp -> p.get(cp[0]).getCategories().add(c.get(cp[1])));
+                });
 
-            return Mono.just(data.getT2());
-        });
     }
 
     @Override
@@ -289,10 +308,10 @@ public class ExProductRepositoryImpl implements ExProductRepository {
                 batch.add(String.format(categoryQuery, c.getId() == null ? "DEFAULT" : c.getId(), c.getName()));
             }
             return Flux.from(batch.execute()).flatMap(rs -> rs.map(row -> {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("id", row.get("id"));
-                    return map;
-                })
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("id", row.get("id"));
+                        return map;
+                    })
             );
         }).collectList();
 
@@ -308,17 +327,17 @@ public class ExProductRepositoryImpl implements ExProductRepository {
                 batch.add(String.format(detailQuery, v.getDetail().getColor(), v.getDetail().getImage(), v.getDetail().getPrice(), v.getDetail().getSize()));
             }
             return Flux.from(batch.execute()).flatMap(rs -> rs.map(row -> {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("id", row.get("id"));
-                    return map;
-                })
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("id", row.get("id"));
+                        return map;
+                    })
             );
         }).collectList();
         return Mono.zip(vendor, detail, category).flatMap(data -> client
-                    .sql(String.format(productQuery, product.getDescription(), product.getName(), data.getT1().get("id"), data.getT2().get(0).get("id")))
-                    .fetch()
-                    .first()
-                    .flatMap(row -> client.inConnectionMany(connection -> {
+                .sql(String.format(productQuery, product.getDescription(), product.getName(), data.getT1().get("id"), data.getT2().get(0).get("id")))
+                .fetch()
+                .first()
+                .flatMap(row -> client.inConnectionMany(connection -> {
                             Batch batch = connection.createBatch();
                             for (Map<String, Object> c : data.getT3()) {
                                 batch.add(String.format(productCategoryQuery, row.get("id"), c.get("id")));
@@ -328,7 +347,7 @@ public class ExProductRepositoryImpl implements ExProductRepository {
                             }
                             return Flux.from(batch.execute());
                         }).collectList()
-                    )
+                )
         );
     }
 
