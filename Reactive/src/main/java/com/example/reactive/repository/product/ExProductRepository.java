@@ -8,7 +8,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 public interface ExProductRepository {
-    Mono<List<Product>> findAllProducts();
+    Mono<List<Product>> findAllProducts(Integer limit);
     Mono<List<Product>> findAllProductsByVendorId(Long vendorId);
     Mono<List<Product>> findAllProductsByCategoryId(Long categoryId);
     Mono<Product> findProductById(Long id);

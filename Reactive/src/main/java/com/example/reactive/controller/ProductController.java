@@ -33,9 +33,7 @@ public class ProductController {
 
     @GetMapping("/products")
     private Mono<List<Product>> getProducts() {
-
-        var test = productRepository.findAllProducts();
-        return test;
+        return productRepository.findAllProducts(50);
     }
 
     @GetMapping("/product/{id}")

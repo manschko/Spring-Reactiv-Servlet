@@ -39,8 +39,6 @@ public class Product {
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "detail_id")
     private ProductDetail detail;
-
-    //TODO Cascade
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "vendor_id")
     private Vendor vendor;
