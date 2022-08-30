@@ -231,7 +231,7 @@ public class ExProductRepositoryImpl implements ExProductRepository {
                 FROM product_category
                 WHERE category_id = %s
                 Limit %s
-                OFFSET
+                OFFSET %s
                 """, categoryId, limit, limit*page);
 
 
