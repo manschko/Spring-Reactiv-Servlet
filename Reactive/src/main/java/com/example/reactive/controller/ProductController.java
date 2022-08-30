@@ -33,7 +33,7 @@ public class ProductController {
 
     @GetMapping("/products")
     private Mono<List<Product>> getProducts() {
-        return productRepository.findAllProducts(50);
+        return productRepository.findAllProducts(50,1);
     }
 
     @GetMapping("/product/{id}")
@@ -48,7 +48,7 @@ public class ProductController {
 
     @GetMapping("/vendor/{id}/products")
     private Mono<List<Product>> getProductsByVendor(@PathVariable Long id) {
-        return productRepository.findAllProductsByVendorId(id);
+        return productRepository.findAllProductsByVendorId(id,50,1);
     }
     @GetMapping("/vendors")
     private Mono<List<Vendor>> getVendors() {
@@ -60,7 +60,7 @@ public class ProductController {
     }
     @GetMapping("/category/{id}/products")
     private Mono<List<Product>> getProductsByCategory(@PathVariable Long id) {
-        return productRepository.findAllProductsByCategoryId(id);
+        return productRepository.findAllProductsByCategoryId(id,50,1);
     }
     @GetMapping("/categories")
     private Mono<List<Category>> getCategories() {

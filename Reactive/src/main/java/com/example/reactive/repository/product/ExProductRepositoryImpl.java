@@ -31,7 +31,7 @@ public class ExProductRepositoryImpl implements ExProductRepository {
 
 
     @Override
-    public Mono<List<Product>> findAllProducts(Integer limit) {
+    public Mono<List<Product>> findAllProducts(Integer limit, Integer page) {
         String productQuery = String.format("""
                 SELECT v.name as vendorName, product.*, pd.color, pd.image, pd.price, pd.size, v.address, v.contact_num
                 FROM product
@@ -40,7 +40,8 @@ public class ExProductRepositoryImpl implements ExProductRepository {
                 INNER JOIN vendor v
                 ON product.vendor_id = v.id
                 LIMIT %s
-                """, limit);
+                OFFSET %s
+                """, limit, limit*page);
 
         String variantQuery = """
                 SELECT *
@@ -76,7 +77,7 @@ public class ExProductRepositoryImpl implements ExProductRepository {
                             .fetch()
                             .all().collectList().flatMap(rows2 -> {
                                 List<Long[]> productCategorieIds = rows2.stream().map(mapper::categoryProduct).toList();
-                                List<String> categoryIds = fetchCategoryIds(productCategorieIds);
+                                List<String> categoryIds = fetchIds(productCategorieIds, 1);
 
                                 Mono<List<Category>> categories = client
                                         .sql(String.format(categoryQuery, "(" + String.join(", ", categoryIds) + ")"))
@@ -86,7 +87,7 @@ public class ExProductRepositoryImpl implements ExProductRepository {
                                 Mono<List<Variant>> variants = client
                                         .sql(String.format(variantQuery, "(" + String.join(", ", productIds) + ")"))
                                         .fetch()
-                                        .all().collectList().map(row2 -> row2.stream().map(mapper::variant).toList());
+                                        .all().collectList().map(rows3 -> rows3.stream().map(mapper::variant).toList());
 
 
                                  return Mono.zip(categories, variants).flatMap(data -> {
@@ -106,10 +107,10 @@ public class ExProductRepositoryImpl implements ExProductRepository {
 
     }
 
-    private List<String> fetchCategoryIds(List<Long[]> productCategoryIds) {
+    private List<String> fetchIds(List<Long[]> productCategoryIds, int index) {
         List<String> categorieIds = new ArrayList<>();
         for(Long[] cp : productCategoryIds) {
-            String id = cp[1].toString();
+            String id = cp[index].toString();
             if(!categorieIds.contains(id)) {
                 categorieIds.add(id);
             }
@@ -119,7 +120,7 @@ public class ExProductRepositoryImpl implements ExProductRepository {
 
 
     @Override
-    public Mono<List<Product>> findAllProductsByVendorId(Long vendorId) {
+    public Mono<List<Product>> findAllProductsByVendorId(Long vendorId, Integer limit, Integer page) {
         String productQuery = String.format("""
                 SELECT v.name as vendorName, product.*, pd.color, pd.image, pd.price, pd.size, v.address, v.contact_num
                 FROM product
@@ -128,62 +129,80 @@ public class ExProductRepositoryImpl implements ExProductRepository {
                 INNER JOIN vendor v
                 ON product.vendor_id = v.id
                 WHERE product.vendor_id = %s
-                """, vendorId);
-        String variantQuery = String.format("""
+                LIMIT %s
+                OFFSET %s
+                """, vendorId, limit, limit*page);
+        String variantQuery = """
                 SELECT *
                 FROM variant
                 INNER JOIN product_detail pd
                 ON variant.detail_id = pd.id
                 WHERE variant.product_id
-                IN (SELECT id FROM product WHERE vendor_id = %s)
-                """, vendorId);
-        String categoryQuery = String.format("""
+                IN %s
+                """;
+        String categoryQuery = """
                 SELECT *
                 FROM category
                 WHERE id
-                IN (SELECT category_id FROM product_category WHERE product_id
-                IN (SELECT id FROM product WHERE vendor_id = %s))
-                """, vendorId);
-        String catergoryProductQuery = String.format("""
+                IN %s
+                """;
+        String catergoryProductQuery = """
                 SELECT *
                 FROM product_category
                 WHERE product_id
-                IN (SELECT id FROM product WHERE vendor_id = %s)
-                """, vendorId);
+                IN %s
+                """;
 
-        Mono<List<Variant>> variants = client
-                .sql(variantQuery)
-                .fetch()
-                .all().collectList().map(rows -> rows.stream().map(mapper::variant).toList());
-        Mono<List<Product>> products = client
+
+       return client
                 .sql(productQuery)
                 .fetch()
-                .all().collectList().map(rows -> rows.stream().map(mapper::product).toList());
+                .all().collectList().flatMap(rows -> {
+                    List<Product> products = rows.stream().map(mapper::product).toList();
+                    List<String> productIds = new ArrayList<>();
+                    products.forEach(product -> {
+                        productIds.add(product.getId().toString());
+                    });
 
-        Mono<List<Category>> categories = client
-                .sql(categoryQuery)
-                .fetch()
-                .all().collectList().map(rows -> rows.stream().map(mapper::category).toList());
-        Mono<List<Long[]>> categoryProduct = client
-                .sql(catergoryProductQuery)
-                .fetch()
-                .all().collectList().map(rows -> rows.stream().map(mapper::categoryProduct).toList());
+                   Mono<List<Variant>> variants = client
+                           .sql(String.format(variantQuery,"(" + String.join(", ", productIds) + ")"))
+                           .fetch()
+                           .all().collectList().map(rows2 -> rows2.stream().map(mapper::variant).toList());
+
+                   return client
+                           .sql(String.format(catergoryProductQuery,"(" + String.join(", ", productIds) + ")"))
+                           .fetch()
+                           .all().collectList().flatMap(rows2 ->{
+                               List<Long[]> productCategorieIds = rows2.stream().map(mapper::categoryProduct).toList();
+                               List<String> categoryIds = fetchIds(productCategorieIds, 1);
+                               Mono<List<Category>> categories = client
+                                       .sql(String.format(categoryQuery,"(" + String.join(", ", categoryIds) + ")"))
+                                       .fetch()
+                                       .all().collectList().map(rows3 -> rows3.stream().map(mapper::category).toList());
 
 
-        return Mono.zip(variants, products, categories, categoryProduct).flatMap(data -> {
+                               return Mono.zip(categories, variants).flatMap(data -> {
+                                   Map<Long, Product> p = products.stream().collect(Collectors.toMap(Product::getId, pr -> pr));
+                                   Map<Long, Category> c = data.getT1().stream().collect(Collectors.toMap(Category::getId, cr -> cr));
 
-            Map<Long, Product> p = data.getT2().stream().collect(Collectors.toMap(Product::getId, pr -> pr));
-            Map<Long, Category> c = data.getT3().stream().collect(Collectors.toMap(Category::getId, cr -> cr));
+                                   data.getT2().forEach(variant -> p.get(variant.getProduct().getId()).getVariants().add(variant));
+                                   productCategorieIds.forEach(cp -> p.get(cp[0]).getCategories().add(c.get(cp[1])));
 
-            data.getT1().forEach(variant -> p.get(variant.getProduct().getId()).getVariants().add(variant));
-            data.getT4().forEach(cp -> p.get(cp[0]).getCategories().add(c.get(cp[1])));
 
-            return Mono.just(data.getT2());
-        });
+                                   return Mono.just(products);
+                               });
+
+                           });
+                });
+
+
+
+
+
     }
 
     @Override
-    public Mono<List<Product>> findAllProductsByCategoryId(Long categoryId) {
+    public Mono<List<Product>> findAllProductsByCategoryId(Long categoryId, Integer limit, Integer page) {
         String productQuery = """
                 SELECT v.name as vendorName, product.*, pd.color, pd.image, pd.price, pd.size, v.address, v.contact_num 
                 FROM product
@@ -192,7 +211,7 @@ public class ExProductRepositoryImpl implements ExProductRepository {
                 INNER JOIN vendor v
                 ON product.vendor_id = v.id
                 WHERE product.id
-                IN (SELECT product_id FROM product_category WHERE category_id = " + categoryId + ")
+                IN %s
                 """;
         String variantQuery = """
                 SELECT *
@@ -200,8 +219,7 @@ public class ExProductRepositoryImpl implements ExProductRepository {
                 INNER JOIN product_detail pd
                 ON variant.detail_id = pd.id
                 WHERE variant.product_id
-                IN (SELECT id FROM product WHERE id
-                IN (SELECT product_id FROM product_category WHERE category_id = " + categoryId + "))
+                IN %s
                 """;
         String categoryQuery = String.format("""
                 SELECT *
@@ -212,16 +230,11 @@ public class ExProductRepositoryImpl implements ExProductRepository {
                 SELECT *
                 FROM product_category
                 WHERE category_id = %s
-                """, categoryId);
+                Limit %s
+                OFFSET
+                """, categoryId, limit, limit*page);
 
-        Mono<List<Variant>> variants = client
-                .sql(variantQuery)
-                .fetch()
-                .all().collectList().map(rows -> rows.stream().map(mapper::variant).toList());
-        Mono<List<Product>> products = client
-                .sql(productQuery)
-                .fetch()
-                .all().collectList().map(rows -> rows.stream().map(mapper::product).toList());
+
 
         Mono<List<Category>> categories = client
                 .sql(categoryQuery)
@@ -232,16 +245,25 @@ public class ExProductRepositoryImpl implements ExProductRepository {
                 .fetch()
                 .all().collectList().map(rows -> rows.stream().map(mapper::categoryProduct).toList());
 
+        return Mono.zip(categories, categoryProduct).flatMap(data -> {
+            List<String> productIds = fetchIds(data.getT2(), 0);
+            Mono<List<Product>> products = client
+                    .sql(String.format(productQuery,"(" + String.join(", ", productIds) + ")"))
+                    .fetch()
+                    .all().collectList().map(rows -> rows.stream().map(mapper::product).toList());
+            Mono<List<Variant>> variants = client
+                    .sql(String.format(variantQuery,"(" + String.join(", ", productIds) + ")"))
+                    .fetch()
+                    .all().collectList().map(rows -> rows.stream().map(mapper::variant).toList());
+            return Mono.zip(products, variants).flatMap(data2 ->{
+                Map<Long, Product> p = data2.getT1().stream().collect(Collectors.toMap(Product::getId, pr -> pr));
+                Map<Long, Category> c = data.getT1().stream().collect(Collectors.toMap(Category::getId, cr -> cr));
 
-        return Mono.zip(variants, products, categories, categoryProduct).flatMap(data -> {
+                data2.getT2().forEach(variant -> p.get(variant.getProduct().getId()).getVariants().add(variant));
+                data.getT2().forEach(cp -> p.get(cp[0]).getCategories().add(c.get(cp[1])));
 
-            Map<Long, Product> p = data.getT2().stream().collect(Collectors.toMap(Product::getId, Function.identity()));
-            Map<Long, Category> c = data.getT3().stream().collect(Collectors.toMap(Category::getId, Function.identity()));
-
-            data.getT1().forEach(variant -> p.get(variant.getProduct().getId()).getVariants().add(variant));
-            data.getT4().forEach(cp -> p.get(cp[0]).getCategories().add(c.get(cp[1])));
-
-            return Mono.just(data.getT2());
+                return Mono.just(data2.getT1());
+            });
         });
     }
 
