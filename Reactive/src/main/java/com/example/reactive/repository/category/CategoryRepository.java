@@ -6,7 +6,9 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 
 
-public interface CategoryRepository extends ReactiveCrudRepository<Category, Long>, ExCategoryRepository {
+public interface CategoryRepository extends ReactiveCrudRepository<Category, Long>{
 
     public Flux<Category> findAllByName(String name);
+
+    Flux<Category> findFirst50ByOrderByIdAsc();
 }

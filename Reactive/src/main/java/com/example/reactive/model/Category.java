@@ -18,9 +18,4 @@ public class Category {
     private String name;
 
 
-    @JsonIgnore
-    private List<Product> products;
-
-
-
 }

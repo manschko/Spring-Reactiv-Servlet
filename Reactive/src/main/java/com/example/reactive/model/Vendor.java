@@ -1,5 +1,6 @@
 package com.example.reactive.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
@@ -19,10 +20,9 @@ public class Vendor {
 
     private String address;
 
-    private List<Product> products;
+
 
     public Vendor(Long id, String name, String contactNum, String address) {
-        this.products = new ArrayList<>();
         this.id = id;
         this.name = name;
         this.contactNum = contactNum;

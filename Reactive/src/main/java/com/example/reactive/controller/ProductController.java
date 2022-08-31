@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -51,24 +52,33 @@ public class ProductController {
         return productRepository.findAllProductsByVendorId(id,50,0);
     }
     @GetMapping("/vendors")
-    private Mono<List<Vendor>> getVendors() {
-        return vendorRepository.findAllVendors();
+    private Flux<Vendor> getVendors() {
+        return vendorRepository.findFirst50ByOrderByIdAsc();
     }
     @GetMapping("/vendor/{id}")
     private Mono<Vendor> getVendor(@PathVariable Long id) {
-        return vendorRepository.findVendorById(id);
+        return vendorRepository.findById(id);
     }
+    @PostMapping("/vendor")
+    private Mono<Vendor> createVendor(@RequestBody Vendor vendor) {
+        return vendorRepository.save(vendor);
+    }
+
     @GetMapping("/category/{id}/products")
     private Mono<List<Product>> getProductsByCategory(@PathVariable Long id) {
         return productRepository.findAllProductsByCategoryId(id,50,0);
     }
     @GetMapping("/categories")
-    private Mono<List<Category>> getCategories() {
-        return categoryRepository.findAllCategories();
+    private Flux<Category> getCategories() {
+        return categoryRepository.findFirst50ByOrderByIdAsc();
     }
     @GetMapping("/category/{id}")
     private Mono<Category> getCategory(@PathVariable Long id) {
-        return categoryRepository.findCategoryById(id);
+        return categoryRepository.findById(id);
+    }
+    @PostMapping("/category")
+    private Mono<Category> createCategory(@RequestBody Category category) {
+        return categoryRepository.save(category);
     }
 
 }

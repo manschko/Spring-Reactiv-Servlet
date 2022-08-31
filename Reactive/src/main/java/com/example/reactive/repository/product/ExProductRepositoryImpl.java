@@ -17,15 +17,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+
 import java.util.stream.Collectors;
 
 public class ExProductRepositoryImpl implements ExProductRepository {
 
     ProductMapper mapper = new ProductMapper();
-    @Autowired
-    CategoryRepository categoryRepository;
-    //two dependencies a
     @Autowired
     private DatabaseClient client;
 
@@ -392,10 +389,11 @@ public class ExProductRepositoryImpl implements ExProductRepository {
         );
     }
 
-    @Override
+    /*@Override
     public Mono<List<Vendor>> findAllVendors() {
         final String query = """
                 SELECT * FROM vendor
+                LIMIT 50
                 """;
         return client.sql(query)
                 .fetch()
@@ -427,6 +425,7 @@ public class ExProductRepositoryImpl implements ExProductRepository {
     public Mono<List<Category>> findAllCategories() {
         final String query = """
                 SELECT * FROM category
+                LIMIT 50
                 """;
         return client.sql(query)
                 .fetch()
@@ -452,6 +451,6 @@ public class ExProductRepositoryImpl implements ExProductRepository {
                 RETURNING id
                 """, category.getId() == null ? "DEFAULT" : category.getId(), category.getName());
         return client.sql(query).fetch().first().map(row -> row.get("id"));
-    }
+    }*/
 }
 

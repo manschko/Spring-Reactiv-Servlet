@@ -4,7 +4,6 @@ services:
     build: Servlet/
     ports:
       - "8080:8080"
-      - "8849:8849"
     networks:
       - servletReactive
     depends_on:
@@ -13,10 +12,14 @@ services:
       resources:
         limits:
           cpus: "0.5"
-          memory: "1024M"
+          memory: "4GB"
         reservations:
           cpus: "0.5"
-          memory: "1024M"
+          memory: "4GB"
+    environment:
+      - JVM_OPTS=-Xmx3g -Xms3g -XX:MaxPermSize=1024m
+      - CATALINA_OPTS=-Xmx3g -Xms3g -XX:MaxPermSize=1024m
+
 
 #TODO issue when network is not created yet. maeby need to use same network insteat of searching for existing one? Could give error if network exists already?
 networks:

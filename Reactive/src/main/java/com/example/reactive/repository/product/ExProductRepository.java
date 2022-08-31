@@ -13,10 +13,10 @@ public interface ExProductRepository {
     Mono<List<Product>> findAllProductsByCategoryId(Long categoryId,Integer limit, Integer page);
     Mono<Product> findProductById(Long id);
     Mono<Object> saveProduct(Product product);
-    Mono<List<Vendor>> findAllVendors();
+   /* Mono<List<Vendor>> findAllVendors();
     Mono<Vendor> findVendorById(Long id);
     Mono<Object> saveVendor(Vendor vendor);
     Mono<List<Category>> findAllCategories();
     Mono<Category> findCategoryById(Long id);
-    Mono<Object> saveCategory(Category category);
+    Mono<Object> saveCategory(Category category);*/
 }
