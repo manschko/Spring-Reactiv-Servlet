@@ -1,0 +1,10 @@
+{
+  "simulation": "PrototypeSimulation.Reactive.ServletGetProduct",
+  "simulationId": "servletgetproduct-20220901121719012",
+  "start": 1662034640105,
+  "description": "",
+  "scenarios": ["Get Product"],
+  "assertions": [
+
+  ]
+}

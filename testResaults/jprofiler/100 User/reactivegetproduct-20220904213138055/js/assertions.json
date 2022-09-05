@@ -1,0 +1,10 @@
+{
+  "simulation": "PrototypeSimulation.Reactive.ReactiveGetProduct",
+  "simulationId": "reactivegetproduct-20220904213138055",
+  "start": 1662327098995,
+  "description": "",
+  "scenarios": ["Get Product"],
+  "assertions": [
+
+  ]
+}
