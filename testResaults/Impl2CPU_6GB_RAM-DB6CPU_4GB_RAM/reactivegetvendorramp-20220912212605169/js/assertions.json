@@ -1,0 +1,10 @@
+{
+  "simulation": "PrototypeSimulation.Reactive.ReactiveGetVendorRamp",
+  "simulationId": "reactivegetvendorramp-20220912212605169",
+  "start": 1663017966144,
+  "description": "",
+  "scenarios": ["Get Vendors"],
+  "assertions": [
+
+  ]
+}
